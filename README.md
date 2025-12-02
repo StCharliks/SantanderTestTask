@@ -4,7 +4,7 @@ Lightweight .NET8 service that fetches Hacker News stories with built-in protect
 
 ## Key features
 - Named `HttpClient` for Hacker News with a singleton `FixedWindowRateLimiter`.
-- `HackerNewRateLimitter` handler: fail-fast lease acquisition (returns429) to avoid long internal queues.
+- `HackerNewRateLimitter` handler: fail-fast lease acquisition (returns 429) to avoid long internal queues.
 - Polly policies (bulkhead + retry) applied to the client for concurrency control and resilient retries.
 - `CachedStoriesRepository` implements stale-while-revalidate + per-key serialization to prevent cache stampedes.
 - `StoriesRepository` fetches items in parallel but is resilient to per-item failures and returns partial results.
@@ -76,18 +76,16 @@ Example `application.json` (minimal)
 ## Tuning tips
 - Keep `QueueLimit` small to avoid many waiting tasks.
 - Bulkhead should be sized according to instance capacity (HTTP connections, CPU).
-- Retry count should be small (2–3) with jitter and honor `Retry-After`.
+- Retry count should be small (2â€“3) with jitter.
 - Make these values configurable via the `HackerNews` section and tune in staging.
 
 ## Where to look in code
-- `ServiceCollectionExtensions.AddHackerNewsHttpClient` — client setup, rate limiter and Polly wiring
-- `Infrastructure/HackerNewRateLimitter.cs` — fail-fast lease acquisition
-- `Repository/StoriesRepository.cs` — per-item fetch and partial result handling
-- `Repository/CachedStoriesRepository.cs` — cache coalescing and stale-while-revalidate
-- `Controllers/StoriesController.cs` — API surface
+- `ServiceCollectionExtensions.AddHackerNewsHttpClient` â€” client setup, rate limiter and Polly wiring
+- `Infrastructure/HackerNewRateLimitter.cs` â€” fail-fast lease acquisition
+- `Repository/StoriesRepository.cs` â€” per-item fetch and partial result handling
+- `Repository/CachedStoriesRepository.cs` â€” cache coalescing and stale-while-revalidate
+- `Controllers/StoriesController.cs` â€” API surface
 
 ## Notes
 - These protections are per application instance. If you have multiple instances, tune limits accordingly to avoid exceeding the upstream quota.
 - Add metrics/logging (429 counts, retry attempts, bulkhead rejections, cache hits/misses) to observe and tune.
-
-If you want, I can add an example `k6` script or a WebApplicationFactory-based integration test next.
