@@ -41,7 +41,7 @@ Example `application.json` (minimal)
 ```
 
 ## How it protects the upstream API
-- Rate limiter: enforces a permit rate (permits/second) and can queue a small burst. If a permit cannot be acquired quickly, the handler returns429.
+- Rate limiter: enforces a permit rate (permits/second) and can queue a small burst. If a permit cannot be acquired quickly, the handler returns 429.
 - Bulkhead: bounds concurrent outbound requests to protect local resources.
 - Retry: conservative retry with exponential backoff + jitter; honor `Retry-After` when possible.
 - Cache with stale-while-revalidate: returns stale entries immediately and refreshes in background to avoid thundering herd.
