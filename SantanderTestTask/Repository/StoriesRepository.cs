@@ -1,4 +1,9 @@
-﻿using SantanderTestTask.Infrastructure.Entities;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+using SantanderTestTask.Infrastructure.Entities;
 using SantanderTestTask.Models;
 
 namespace SantanderTestTask.Repository
@@ -27,14 +32,32 @@ namespace SantanderTestTask.Repository
 
             var tasks = storiesIds.Select(async id =>
             {
-                var client = _httpClientFactory.CreateClient("HackerNews");
-                var story = await client.GetFromJsonAsync<HackerNewsStory>($"item/{id}.json");
-                return Story.FromEntity(story!);
+                try
+                {
+                    var client = _httpClientFactory.CreateClient("HackerNews");
+                    var response = await client.GetAsync($"item/{id}.json");
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        // Treat non-success (including 429) as missing item; return null to allow partial results
+                        return (Story?)null;
+                    }
+
+                    var storyEntity = await response.Content.ReadFromJsonAsync<HackerNewsStory>();
+                    if (storyEntity == null) return (Story?)null;
+
+                    return Story.FromEntity(storyEntity);
+                }
+                catch
+                {
+                    // Swallow per-item exceptions to avoid failing the whole batch
+                    return (Story?)null;
+                }
             });
 
-            return await Task.WhenAll(tasks)
-                .ContinueWith(t => t.Result.Where(s => s != null).ToList()!)
-                ?? new List<Story>(0);
+            var results = await Task.WhenAll(tasks);
+
+            return results.Where(s => s != null).Select(s => s!).ToList() ?? new List<Story>(0);
         }
     }
 }

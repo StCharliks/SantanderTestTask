@@ -1,6 +1,0 @@
-@SantanderTestTask_HostAddress = http://localhost:5023
-
-GET {{SantanderTestTask_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
